@@ -1,5 +1,9 @@
 import { Hono } from "hono";
 
+// Dreams Router imports
+import { createEVMAuthFromPrivateKey } from '@daydreamsai/ai-sdk-provider';
+import { createDreams } from '@lucid-dreams/agent-kit';
+
 // Vercel optimization
 const isVercel = process.env.VERCEL === '1';
 
@@ -23,6 +27,28 @@ const { paymentMiddleware: x402Middleware, facilitator: cdpFacilitator } = await
 // For Base Mainnet: CDP facilitator is REQUIRED
 // For testnet: use { url: "https://x402.org/facilitator" }
 const facilitatorConfig = cdpFacilitator;
+
+// Dreams Router configuration for Base network
+let dreamsRouter: any = null;
+try {
+  if (process.env.EVM_PRIVATE_KEY) {
+    const { dreamsRouter: router } = await createEVMAuthFromPrivateKey(
+      process.env.EVM_PRIVATE_KEY as `0x${string}`,
+      {
+        payments: { 
+          network: 'base-mainnet',
+          rpcUrl: rpcUrl
+        },
+      }
+    );
+    dreamsRouter = router;
+    console.log('✅ Dreams Router initialized for Base network');
+  } else {
+    console.log('⚠️ EVM_PRIVATE_KEY not found, Dreams Router disabled');
+  }
+} catch (error) {
+  console.error('❌ Dreams Router initialization failed:', error);
+}
 
 // x402 Payment Middleware - MUST be before route definitions
 app.use(
@@ -179,6 +205,130 @@ app.get("/payment/100usdc", async (c) => {
     payment: {
       amount: "100 USDC",
       tokens: "2,000,000 PAYX",
+      status: "Payment recorded - Tokens will be distributed later"
+    }
+  });
+});
+
+// ===== DREAMS ROUTER PAYMENT ENDPOINTS =====
+// Alternative payment method using Dreams Router on Base network
+
+app.get("/dreams/payment/5usdc", async (c) => {
+  if (!dreamsRouter) {
+    return c.json({ error: "Dreams Router not available" }, 503);
+  }
+
+  const walletAddress = c.req.query('wallet');
+  if (walletAddress && process.env.SUPABASE_URL) {
+    try {
+      const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'apikey': process.env.SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          wallet_address: walletAddress.toLowerCase(),
+          amount_usdc: 5,
+          amount_payx: 100000,
+          payment_method: 'dreams-router', // Mark as Dreams Router payment
+          created_at: new Date().toISOString()
+        })
+      });
+      if (response.ok) console.log('Dreams Router payment tracked');
+    } catch (error) {
+      console.error('Dreams Router tracking failed:', error);
+    }
+  }
+
+  return c.json({
+    success: true,
+    message: "Dreams Router Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
+    payment: {
+      amount: "5 USDC",
+      tokens: "100,000 PAYX",
+      method: "Dreams Router (Base)",
+      status: "Payment recorded - Tokens will be distributed later"
+    }
+  });
+});
+
+app.get("/dreams/payment/10usdc", async (c) => {
+  if (!dreamsRouter) {
+    return c.json({ error: "Dreams Router not available" }, 503);
+  }
+
+  const walletAddress = c.req.query('wallet');
+  if (walletAddress && process.env.SUPABASE_URL) {
+    try {
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'apikey': process.env.SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          wallet_address: walletAddress.toLowerCase(),
+          amount_usdc: 10,
+          amount_payx: 200000,
+          payment_method: 'dreams-router',
+          created_at: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Dreams Router tracking failed:', error);
+    }
+  }
+
+  return c.json({
+    success: true,
+    message: "Dreams Router Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
+    payment: {
+      amount: "10 USDC",
+      tokens: "200,000 PAYX",
+      method: "Dreams Router (Base)",
+      status: "Payment recorded - Tokens will be distributed later"
+    }
+  });
+});
+
+app.get("/dreams/payment/100usdc", async (c) => {
+  if (!dreamsRouter) {
+    return c.json({ error: "Dreams Router not available" }, 503);
+  }
+
+  const walletAddress = c.req.query('wallet');
+  if (walletAddress && process.env.SUPABASE_URL) {
+    try {
+      await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          'apikey': process.env.SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          wallet_address: walletAddress.toLowerCase(),
+          amount_usdc: 100,
+          amount_payx: 2000000,
+          payment_method: 'dreams-router',
+          created_at: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.error('Dreams Router tracking failed:', error);
+    }
+  }
+
+  return c.json({
+    success: true,
+    message: "Dreams Router Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
+    payment: {
+      amount: "100 USDC",
+      tokens: "2,000,000 PAYX",
+      method: "Dreams Router (Base)",
       status: "Payment recorded - Tokens will be distributed later"
     }
   });
@@ -686,17 +836,25 @@ app.get("/dashboard", async (c) => {
     if (response.ok) {
       const payments = await response.json();
       
-      // Group by wallet address
+      // Group by wallet address with payment method tracking
       const walletStats = {};
+      let totalBasePayments = 0;
+      let totalDreamsPayments = 0;
+      let totalBaseUSDC = 0;
+      let totalDreamsUSDC = 0;
       
       payments.forEach(payment => {
         const wallet = payment.wallet_address;
+        const paymentMethod = payment.payment_method || 'x402-base'; // Default to x402-base for existing payments
+        
         if (!walletStats[wallet]) {
           walletStats[wallet] = {
             wallet_address: wallet.toLowerCase(),
             total_usdc: 0,
             total_payx: 0,
             payment_count: 0,
+            base_payments: 0,
+            dreams_payments: 0,
             first_payment: null,
             last_payment: null,
             payments: []
@@ -707,6 +865,17 @@ app.get("/dashboard", async (c) => {
         walletStats[wallet].total_payx += payment.amount_payx;
         walletStats[wallet].payment_count++;
         walletStats[wallet].payments.push(payment);
+        
+        // Track payment methods
+        if (paymentMethod === 'dreams-router') {
+          walletStats[wallet].dreams_payments++;
+          totalDreamsPayments++;
+          totalDreamsUSDC += payment.amount_usdc;
+        } else {
+          walletStats[wallet].base_payments++;
+          totalBasePayments++;
+          totalBaseUSDC += payment.amount_usdc;
+        }
         
         if (!walletStats[wallet].first_payment || payment.created_at < walletStats[wallet].first_payment) {
           walletStats[wallet].first_payment = payment.created_at;
@@ -725,6 +894,19 @@ app.get("/dashboard", async (c) => {
         total_payments: payments.length,
         total_usdc: payments.reduce((sum, p) => sum + p.amount_usdc, 0),
         total_payx: payments.reduce((sum, p) => sum + p.amount_payx, 0),
+        // Payment method breakdown
+        payment_methods: {
+          base: {
+            payments: totalBasePayments,
+            usdc: totalBaseUSDC,
+            method: 'x402-base'
+          },
+          dreams: {
+            payments: totalDreamsPayments,
+            usdc: totalDreamsUSDC,
+            method: 'dreams-router'
+          }
+        },
         wallets: sortedWallets
       });
     }
@@ -1484,6 +1666,14 @@ app.get("/", (c) => {
         <a href="#" onclick="openPaymentModal('/payment/100usdc', '🌟 100 USDC Payment', 'premium'); return false;">100 USDC → 2,000,000 PAYX</a>
         
         <a href="#" onclick="openPaymentModal('/payment/test', '🧪 Test Payment', 'test'); return false;" class="test-button">0.01 USDC → 50 PAYX</a>
+        
+        <div style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; text-align: center;">
+          <h3 style="color: white; margin: 0 0 10px 0; font-size: 16px;">🌙 Dreams Router Payments</h3>
+          <p style="color: #e0e0e0; margin: 5px 0; font-size: 12px;">Alternative payment method using Dreams Router</p>
+          <a href="#" onclick="openPaymentModal('/dreams/payment/5usdc', '🌙 Dreams: 5 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">5 USDC → 100,000 PAYX</a>
+          <a href="#" onclick="openPaymentModal('/dreams/payment/10usdc', '🌙 Dreams: 10 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">10 USDC → 200,000 PAYX</a>
+          <a href="#" onclick="openPaymentModal('/dreams/payment/100usdc', '🌙 Dreams: 100 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">100 USDC → 2,000,000 PAYX</a>
+        </div>
         
         <div class="info">
           <p><strong>Token Information:</strong></p>

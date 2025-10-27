@@ -8,9 +8,12 @@
   },
   "dependencies": {
     "@coinbase/x402": "^0.6.6",
+    "@daydreamsai/ai-sdk-provider": "^0.1.5",
     "@hono/node-server": "^1.19.5",
+    "@lucid-dreams/agent-kit": "^0.2.19",
     "dotenv": "^17.2.3",
     "hono": "^4.10.3",
+    "viem": "^2.38.4",
     "x402-hono": "^0.6.5"
   },
   "devDependencies": {
