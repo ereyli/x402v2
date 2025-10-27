@@ -352,7 +352,7 @@ app.get("/balance/:walletAddress", async (c) => {
       headers: {
         'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         'apikey': process.env.SUPABASE_ANON_KEY
-      } as HeadersInit
+      } as HeadersInit as HeadersInit
     });
 
     if (response.ok) {
@@ -528,7 +528,7 @@ app.get("/test-supabase", async (c) => {
       headers: {
         'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         'apikey': process.env.SUPABASE_ANON_KEY
-      }
+      } as HeadersInit
     });
 
     if (response.ok) {
@@ -835,7 +835,7 @@ app.get("/dashboard", async (c) => {
       headers: {
         'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         'apikey': process.env.SUPABASE_ANON_KEY
-      }
+      } as HeadersInit
     });
 
     if (response.ok) {
