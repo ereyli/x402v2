@@ -27,25 +27,33 @@ const { paymentMiddleware: x402Middleware, facilitator: cdpFacilitator } = await
 // For testnet: use { url: "https://x402.org/facilitator" }
 const facilitatorConfig = cdpFacilitator;
 
-// Dreams Router configuration for Base network
+// Dreams Router configuration for Base network - Lazy loading
 let dreamsRouter: any = null;
-try {
-  if (process.env.EVM_PRIVATE_KEY) {
-    const { dreamsRouter: router } = await createEVMAuthFromPrivateKey(
-      process.env.EVM_PRIVATE_KEY as `0x${string}`,
-      {
-        payments: { 
-          network: 'base'
-        },
-      }
-    );
-    dreamsRouter = router;
-    console.log('✅ Dreams Router initialized for Base network');
-  } else {
-    console.log('⚠️ EVM_PRIVATE_KEY not found, Dreams Router disabled');
+
+async function initializeDreamsRouter() {
+  if (dreamsRouter) return dreamsRouter;
+  
+  try {
+    if (process.env.EVM_PRIVATE_KEY) {
+      const { dreamsRouter: router } = await createEVMAuthFromPrivateKey(
+        process.env.EVM_PRIVATE_KEY as `0x${string}`,
+        {
+          payments: { 
+            network: 'base'
+          },
+        }
+      );
+      dreamsRouter = router;
+      console.log('✅ Dreams Router initialized for Base network');
+      return dreamsRouter;
+    } else {
+      console.log('⚠️ EVM_PRIVATE_KEY not found, Dreams Router disabled');
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Dreams Router initialization failed:', error);
+    return null;
   }
-} catch (error) {
-  console.error('❌ Dreams Router initialization failed:', error);
 }
 
 // x402 Payment Middleware - MUST be before route definitions
@@ -208,7 +216,8 @@ app.get("/payment/100usdc", async (c) => {
 // Alternative payment method using Dreams Router on Base network
 
 app.get("/dreams/payment/5usdc", async (c) => {
-  if (!dreamsRouter) {
+  const router = await initializeDreamsRouter();
+  if (!router) {
     return c.json({ error: "Dreams Router not available" }, 503);
   }
 
@@ -249,7 +258,8 @@ app.get("/dreams/payment/5usdc", async (c) => {
 });
 
 app.get("/dreams/payment/10usdc", async (c) => {
-  if (!dreamsRouter) {
+  const router = await initializeDreamsRouter();
+  if (!router) {
     return c.json({ error: "Dreams Router not available" }, 503);
   }
 
@@ -289,7 +299,8 @@ app.get("/dreams/payment/10usdc", async (c) => {
 });
 
 app.get("/dreams/payment/100usdc", async (c) => {
-  if (!dreamsRouter) {
+  const router = await initializeDreamsRouter();
+  if (!router) {
     return c.json({ error: "Dreams Router not available" }, 503);
   }
 
