@@ -1758,8 +1758,8 @@ app.get("/", (c) => {
         let currentPaymentType = '';
         let currentUserWallet = null; // Kullanıcının cüzdan adresi
         
-        // Define openPaymentModal function
-        function openPaymentModal(url, title, type) {
+        // Define openPaymentModal function - Global scope
+        window.openPaymentModal = function(url, title, type) {
           const modal = document.getElementById('paymentModal');
           const modalContent = document.getElementById('modalContent');
           const modalTitle = document.getElementById('modalTitle');
@@ -1798,12 +1798,12 @@ app.get("/", (c) => {
         }
         
         // Legacy connect wallet function (kept for compatibility)
-        async function connectWallet() {
+        window.connectWallet() {
           console.log('⚠️ Legacy connect wallet - use blockchain monitoring instead');
         }
         
         // Auto-detect wallet address (fallback)
-        async function autoDetectWallet() {
+        window.autoDetectWallet() {
           const walletInput = document.getElementById('paymentWalletInput');
           
           // Try to get wallet from MetaMask or other providers
@@ -1846,7 +1846,7 @@ app.get("/", (c) => {
           return false;
         }
         
-        function startPayment() {
+        window.startPayment() {
           const iframe = document.getElementById('paymentIframe');
           
           // Show iframe directly
@@ -1862,7 +1862,7 @@ app.get("/", (c) => {
         }
         
         // Blockchain monitoring function
-        function startBlockchainMonitoring() {
+        window.startBlockchainMonitoring() {
                  console.log('🔍 Starting blockchain monitoring...');
                  
                  // Monitor for 15 minutes
@@ -1885,7 +1885,7 @@ app.get("/", (c) => {
                }
         
         // Sync blockchain transactions
-        async function syncBlockchainTransactions() {
+        window.syncBlockchainTransactions() {
           try {
             console.log('🔄 Syncing blockchain transactions...');
             
@@ -1924,33 +1924,33 @@ app.get("/", (c) => {
         }
         
         // Legacy payment monitoring (kept for compatibility)
-        function startPaymentMonitoring() {
+        window.startPaymentMonitoring() {
           console.log('⚠️ Legacy payment monitoring - use blockchain monitoring instead');
         }
         
         // Legacy functions (kept for compatibility)
-        async function sendWalletToBackend(walletAddress) {
+        window.sendWalletToBackend(walletAddress) {
           console.log('⚠️ Legacy wallet tracking - use blockchain monitoring instead');
         }
         
-        async function sendPaymentConfirmation(walletAddress) {
+        window.sendPaymentConfirmation(walletAddress) {
           console.log('⚠️ Legacy payment confirmation - use blockchain monitoring instead');
         }
         
         // Success overlay function
-        function showSuccessOverlay() {
+        window.showSuccessOverlay() {
           const overlay = document.getElementById('successOverlay');
           overlay.style.display = 'flex';
           createCoinRain();
         }
         
-        function closeSuccessOverlay() {
+        window.closeSuccessOverlay() {
           const overlay = document.getElementById('successOverlay');
           overlay.style.display = 'none';
         }
         
         // Close payment modal function
-        function closePaymentModal() {
+        window.closePaymentModal() {
           const modal = document.getElementById('paymentModal');
           const iframe = document.getElementById('paymentIframe');
           
@@ -1970,7 +1970,7 @@ app.get("/", (c) => {
         }
         
         // Balance check function
-        async function checkBalance() {
+        window.checkBalance() {
           const walletInput = document.getElementById('walletInput');
           const balanceResult = document.getElementById('balanceResult');
           const balanceAmount = document.getElementById('balanceAmount');
@@ -2024,7 +2024,7 @@ app.get("/", (c) => {
         }
         
         // Coin rain animation
-        function createCoinRain(duration = 5000) {
+        window.createCoinRain(duration = 5000) {
           const coinRain = document.getElementById('coinRain');
           const coins = ['💰', '🪙', '💎', '⭐', '✨'];
           const coinsToCreate = 50; // Number of coins
@@ -2088,7 +2088,7 @@ app.get("/", (c) => {
         });
         
         // Legacy enhanced monitoring (kept for compatibility)
-        function enhancedIframeMonitoring() {
+        window.enhancedIframeMonitoring() {
           console.log('⚠️ Legacy enhanced monitoring - use blockchain monitoring instead');
           return null;
         }
@@ -2103,7 +2103,7 @@ app.get("/", (c) => {
           }
         });
         
-        function closePaymentModal() {
+        window.closePaymentModal() {
           const modal = document.getElementById('paymentModal');
           const iframe = document.getElementById('paymentIframe');
           
@@ -2137,7 +2137,7 @@ app.get("/", (c) => {
         });
         
         // Balance Check Function
-        async function checkBalance() {
+        window.checkBalance() {
           const walletInput = document.getElementById('walletInput');
           const balanceResult = document.getElementById('balanceResult');
           const balanceAmount = document.getElementById('balanceAmount');
@@ -2194,7 +2194,7 @@ app.get("/", (c) => {
         }
         
         // Coin Rain Animation
-        function createCoinRain(duration = 5000) {
+        window.createCoinRain(duration = 5000) {
           const coinRain = document.getElementById('coinRain');
           const coins = ['💰', '🪙', '💎', '⭐', '✨'];
           const coinsToCreate = 50; // Number of coins
@@ -2219,7 +2219,7 @@ app.get("/", (c) => {
         }
         
         // Show success overlay with coin rain
-        function showPaymentSuccess() {
+        window.showPaymentSuccess() {
           // Close payment modal
           closePaymentModal();
           
@@ -2237,7 +2237,7 @@ app.get("/", (c) => {
         }
         
         // Close success overlay
-        function closeSuccessOverlay() {
+        window.closeSuccessOverlay() {
           const successOverlay = document.getElementById('successOverlay');
           successOverlay.classList.remove('active');
           
@@ -2248,7 +2248,7 @@ app.get("/", (c) => {
         
         // Listen for iframe navigation (payment success detection)
         let checkInterval;
-        function startPaymentMonitoring() {
+        window.startPaymentMonitoring() {
           const iframe = document.getElementById('paymentIframe');
           if (!iframe) return;
           
