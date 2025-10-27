@@ -2,7 +2,6 @@ import { Hono } from "hono";
 
 // Dreams Router imports
 import { createEVMAuthFromPrivateKey } from '@daydreamsai/ai-sdk-provider';
-import { createDreams } from '@lucid-dreams/agent-kit';
 
 // Vercel optimization
 const isVercel = process.env.VERCEL === '1';
@@ -36,8 +35,7 @@ try {
       process.env.EVM_PRIVATE_KEY as `0x${string}`,
       {
         payments: { 
-          network: 'base-mainnet',
-          rpcUrl: rpcUrl
+          network: 'base'
         },
       }
     );
@@ -58,7 +56,6 @@ app.use(
       "GET /payment/test": {
         price: "$0.01",
         network: network,
-        rpcUrl: rpcUrl,
         config: {
           description: "🧪 TEST: Pay 0.01 USDC → Get 50 PAYX tokens. Tokens will be sent to your wallet later.",
         }
@@ -66,7 +63,6 @@ app.use(
       "GET /payment/5usdc": {
         price: "$5",
         network: network,
-        rpcUrl: rpcUrl,
         config: {
           description: "💎 Pay 5 USDC → Get 100,000 PAYX tokens. Tokens will be sent to your wallet later.",
         }
@@ -74,7 +70,6 @@ app.use(
       "GET /payment/10usdc": {
         price: "$10",
         network: network,
-        rpcUrl: rpcUrl,
         config: {
           description: "🚀 Pay 10 USDC → Get 200,000 PAYX tokens. Tokens will be sent to your wallet later.",
         }
@@ -82,7 +77,6 @@ app.use(
       "GET /payment/100usdc": {
         price: "$100",
         network: network,
-        rpcUrl: rpcUrl,
         config: {
           description: "🌟 Pay 100 USDC → Get 2,000,000 PAYX tokens (Best Value!). Tokens will be sent to your wallet later.",
         }
@@ -117,7 +111,7 @@ app.get("/payment/5usdc", async (c) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           'apikey': process.env.SUPABASE_ANON_KEY
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           wallet_address: walletAddress.toLowerCase(),
           amount_usdc: 5,
@@ -152,7 +146,7 @@ app.get("/payment/10usdc", async (c) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           'apikey': process.env.SUPABASE_ANON_KEY
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           wallet_address: walletAddress.toLowerCase(),
           amount_usdc: 10,
@@ -186,7 +180,7 @@ app.get("/payment/100usdc", async (c) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           'apikey': process.env.SUPABASE_ANON_KEY
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           wallet_address: walletAddress.toLowerCase(),
           amount_usdc: 100,
@@ -227,7 +221,7 @@ app.get("/dreams/payment/5usdc", async (c) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           'apikey': process.env.SUPABASE_ANON_KEY
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           wallet_address: walletAddress.toLowerCase(),
           amount_usdc: 5,
@@ -268,7 +262,7 @@ app.get("/dreams/payment/10usdc", async (c) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           'apikey': process.env.SUPABASE_ANON_KEY
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           wallet_address: walletAddress.toLowerCase(),
           amount_usdc: 10,
@@ -347,7 +341,7 @@ app.get("/balance/:walletAddress", async (c) => {
       headers: {
         'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         'apikey': process.env.SUPABASE_ANON_KEY
-      }
+      } as HeadersInit
     });
 
     if (response.ok) {
@@ -886,7 +880,7 @@ app.get("/dashboard", async (c) => {
       });
       
       // Convert to array and sort by total USDC
-      const sortedWallets = Object.values(walletStats).sort((a, b) => b.total_usdc - a.total_usdc);
+      const sortedWallets = Object.values(walletStats).sort((a: any, b: any) => b.total_usdc - a.total_usdc);
       
       return c.json({
         success: true,
