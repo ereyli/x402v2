@@ -357,8 +357,8 @@ app.get("/balance/:walletAddress", async (c) => {
 
     if (response.ok) {
       const payments = await response.json();
-      const totalPayx = payments.reduce((sum, p) => sum + p.amount_payx, 0);
-      const totalUsdc = payments.reduce((sum, p) => sum + p.amount_usdc, 0);
+      const totalPayx = payments.reduce((sum: any, p: any) => sum + p.amount_payx, 0);
+      const totalUsdc = payments.reduce((sum: any, p: any) => sum + p.amount_usdc, 0);
       
       console.log(`💰 Balance for ${walletAddress}: ${totalPayx} PAYX (${totalUsdc} USDC)`);
       
@@ -425,7 +425,7 @@ app.post("/add-manual-payment", async (c) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
         'apikey': process.env.SUPABASE_ANON_KEY
-      },
+      } as HeadersInit,
       body: JSON.stringify(paymentData)
     });
 
