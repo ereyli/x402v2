@@ -1753,13 +1753,15 @@ app.get("/", (c) => {
       <div id="coinRain" class="coin-rain"></div>
       
       <script>
-        let currentPaymentUrl = '';
-        let currentPaymentTitle = '';
-        let currentPaymentType = '';
-        let currentUserWallet = null; // Kullanıcının cüzdan adresi
-        
-        // Define openPaymentModal function - Global scope
-        window.openPaymentModal = function(url, title, type) {
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+          let currentPaymentUrl = '';
+          let currentPaymentTitle = '';
+          let currentPaymentType = '';
+          let currentUserWallet = null; // Kullanıcının cüzdan adresi
+          
+          // Define openPaymentModal function - Global scope
+          window.openPaymentModal = function(url, title, type) {
           const modal = document.getElementById('paymentModal');
           const modalContent = document.getElementById('modalContent');
           const modalTitle = document.getElementById('modalTitle');
@@ -2292,12 +2294,13 @@ app.get("/", (c) => {
         // Simulate payment success for testing (remove in production)
         // Uncomment to test coin rain: setTimeout(() => showPaymentSuccess(), 3000);
         
-        // Test button for coin rain (temporary - remove before production)
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'c' && e.ctrlKey) {
-            showPaymentSuccess();
-          }
-        });
+          // Test button for coin rain (temporary - remove before production)
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'c' && e.ctrlKey) {
+              showPaymentSuccess();
+            }
+          });
+        }); // End DOMContentLoaded
       </script>
     </body>
     </html>
