@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-// Dreams Router imports
-import { createEVMAuthFromPrivateKey } from '@daydreamsai/ai-sdk-provider';
+// Dreams Router imports - Lazy loading to prevent Vercel crashes
+// import { createEVMAuthFromPrivateKey } from '@daydreamsai/ai-sdk-provider';
 
 // Vercel optimization
 const isVercel = process.env.VERCEL === '1';
@@ -34,6 +34,9 @@ async function initializeDreamsRouter() {
   if (dreamsRouter) return dreamsRouter;
   
   try {
+    // Lazy import to prevent Vercel crashes
+    const { createEVMAuthFromPrivateKey } = await import('@daydreamsai/ai-sdk-provider');
+    
     if (process.env.EVM_PRIVATE_KEY) {
       const { dreamsRouter: router } = await createEVMAuthFromPrivateKey(
         process.env.EVM_PRIVATE_KEY as `0x${string}`,
