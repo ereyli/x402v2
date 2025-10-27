@@ -302,7 +302,7 @@ app.get("/dreams/payment/100usdc", async (c) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           'apikey': process.env.SUPABASE_ANON_KEY
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           wallet_address: walletAddress.toLowerCase(),
           amount_usdc: 100,
