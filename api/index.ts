@@ -50,7 +50,7 @@ async function initializeDreamsRouter() {
       console.log('⚠️ EVM_PRIVATE_KEY not found, Dreams Router disabled');
       return null;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Dreams Router initialization failed:', error);
     return null;
   }
@@ -128,7 +128,7 @@ app.get("/payment/5usdc", async (c) => {
         })
       });
       if (response.ok) console.log('Payment tracked');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Tracking failed:', error);
     }
   }
@@ -162,7 +162,7 @@ app.get("/payment/10usdc", async (c) => {
           created_at: new Date().toISOString()
         })
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Tracking failed:', error);
     }
   }
@@ -196,7 +196,7 @@ app.get("/payment/100usdc", async (c) => {
           created_at: new Date().toISOString()
         })
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Tracking failed:', error);
     }
   }
@@ -240,7 +240,7 @@ app.get("/dreams/payment/5usdc", async (c) => {
         })
       });
       if (response.ok) console.log('Dreams Router payment tracked');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Dreams Router tracking failed:', error);
     }
   }
@@ -281,7 +281,7 @@ app.get("/dreams/payment/10usdc", async (c) => {
           created_at: new Date().toISOString()
         })
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Dreams Router tracking failed:', error);
     }
   }
@@ -322,7 +322,7 @@ app.get("/dreams/payment/100usdc", async (c) => {
           created_at: new Date().toISOString()
         })
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Dreams Router tracking failed:', error);
     }
   }
@@ -372,7 +372,7 @@ app.get("/balance/:walletAddress", async (c) => {
         lastPayment: payments[0] || null
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Balance fetch error:', error);
   }
 
@@ -389,7 +389,7 @@ app.post("/track-wallet", async (c) => {
     // Store wallet address for this payment session
     // This will be used when payment is confirmed
     return c.json({ success: true, message: "Wallet address tracked" });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ success: false, error: error.message });
   }
 });
@@ -444,7 +444,7 @@ app.post("/add-manual-payment", async (c) => {
         error: `Failed to add payment: ${error}` 
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Manual payment error:', error);
     return c.json({ 
       success: false, 
@@ -508,7 +508,7 @@ app.post("/payment-confirmation", async (c) => {
     }
     
     return c.json({ success: true, message: "Payment confirmation received" });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ success: false, error: error.message });
   }
 });
@@ -545,7 +545,7 @@ app.get("/test-supabase", async (c) => {
         supabaseUrl: process.env.SUPABASE_URL
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     return c.json({
       success: false,
       error: `Supabase connection error: ${error}`,
@@ -591,7 +591,7 @@ app.post("/test-payment", async (c) => {
     }
     
     return c.json({ success: true, message: "Test payment received" });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ success: false, error: error.message });
   }
 });
@@ -630,7 +630,7 @@ app.get("/blockchain-transactions", async (c) => {
     
     if (data.status === '1' && data.result) {
       // Filter for USDC transactions (incoming only, excluding 0.01 USDC test payments)
-      const usdcTransactions = data.result.filter(tx => {
+      const usdcTransactions = data.result.filter((tx: any) => {
         // USDC on Base: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
         const isUsdc = tx.contractAddress && tx.contractAddress.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
         const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase(); // Sadece GELEN transfer'lar
@@ -660,7 +660,7 @@ app.get("/blockchain-transactions", async (c) => {
         message: data.message
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.log('❌ BaseScan fetch error:', error);
     return c.json({
       success: false,
@@ -703,7 +703,7 @@ app.post("/sync-blockchain", async (c) => {
     
     if (data.status === '1' && data.result) {
       // Filter for USDC transactions TO our wallet (incoming payments only)
-      const usdcTransactions = data.result.filter(tx => {
+      const usdcTransactions = data.result.filter((tx: any) => {
         // USDC on Base: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
         const isUsdc = tx.contractAddress && tx.contractAddress.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
         const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase(); // Sadece GELEN transfer'lar
@@ -729,7 +729,7 @@ app.post("/sync-blockchain", async (c) => {
       // Log first few transactions for debugging
       if (usdcTransactions.length > 0) {
         console.log('🔍 Sample USDC transactions:');
-        usdcTransactions.slice(0, 5).forEach((tx, index) => {
+        usdcTransactions.slice(0, 5).forEach((tx: any, index: any) => {
           const amountUsdc = parseFloat(tx.value) / Math.pow(10, 6);
           console.log(`   ${index + 1}. ${tx.from} → ${amountUsdc} USDC (${tx.hash})`);
         });
@@ -793,7 +793,7 @@ app.post("/sync-blockchain", async (c) => {
             } else {
               console.log(`❌ Failed to sync transaction: ${tx.hash}`, await supabaseResponse.text());
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log(`❌ Failed to sync transaction: ${tx.hash}`, error);
           }
         }
@@ -815,7 +815,7 @@ app.post("/sync-blockchain", async (c) => {
       status: data.status,
       message: data.message
     });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({
       success: false,
       error: `Sync error: ${error.message}`
@@ -842,13 +842,13 @@ app.get("/dashboard", async (c) => {
       const payments = await response.json();
       
       // Group by wallet address with payment method tracking
-      const walletStats = {};
+      const walletStats: any = {};
       let totalBasePayments = 0;
       let totalDreamsPayments = 0;
       let totalBaseUSDC = 0;
       let totalDreamsUSDC = 0;
       
-      payments.forEach(payment => {
+      payments.forEach((payment: any) => {
         const wallet = payment.wallet_address;
         const paymentMethod = payment.payment_method || 'x402-base'; // Default to x402-base for existing payments
         
@@ -897,8 +897,8 @@ app.get("/dashboard", async (c) => {
         success: true,
         total_wallets: sortedWallets.length,
         total_payments: payments.length,
-        total_usdc: payments.reduce((sum, p) => sum + p.amount_usdc, 0),
-        total_payx: payments.reduce((sum, p) => sum + p.amount_payx, 0),
+        total_usdc: payments.reduce((sum: any, p: any) => sum + p.amount_usdc, 0),
+        total_payx: payments.reduce((sum: any, p: any) => sum + p.amount_payx, 0),
         // Payment method breakdown
         payment_methods: {
           base: {
@@ -915,7 +915,7 @@ app.get("/dashboard", async (c) => {
         wallets: sortedWallets
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Dashboard fetch error:', error);
   }
 
@@ -940,7 +940,7 @@ app.post("/sync-all-historical", async (c) => {
     
     if (data.status === '1' && data.result) {
       // Filter for USDC transactions TO our wallet (incoming payments only)
-      const usdcTransactions = data.result.filter(tx => {
+      const usdcTransactions = data.result.filter((tx: any) => {
         // USDC on Base: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
         const isUsdc = tx.contractAddress && tx.contractAddress.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
         const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase(); // Sadece GELEN transfer'lar
@@ -966,7 +966,7 @@ app.post("/sync-all-historical", async (c) => {
       // Log first few transactions for debugging
       if (usdcTransactions.length > 0) {
         console.log('🔍 Sample USDC transactions:');
-        usdcTransactions.slice(0, 5).forEach((tx, index) => {
+        usdcTransactions.slice(0, 5).forEach((tx: any, index: any) => {
           const amountUsdc = parseFloat(tx.value) / Math.pow(10, 6);
           console.log(`   ${index + 1}. ${tx.from} → ${amountUsdc} USDC (${tx.hash})`);
         });
@@ -1027,7 +1027,7 @@ app.post("/sync-all-historical", async (c) => {
             } else {
               console.log(`❌ Failed to sync transaction: ${tx.hash}`, await supabaseResponse.text());
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log(`❌ Failed to sync transaction: ${tx.hash}`, error);
           }
         }
@@ -1050,7 +1050,7 @@ app.post("/sync-all-historical", async (c) => {
       status: data.status,
       message: data.message
     });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({
       success: false,
       error: `Sync error: ${error.message}`
@@ -1085,7 +1085,7 @@ app.get("/test-pagination", async (c) => {
     console.log('📊 Total transactions:', data.result ? data.result.length : 0);
     
     if (data.status === '1' && data.result) {
-      const usdcTransactions = data.result.filter(tx => {
+      const usdcTransactions = data.result.filter((tx: any) => {
         const isUsdc = tx.contractAddress && tx.contractAddress.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
         const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase();
         const isNotOutgoing = tx.from.toLowerCase() !== walletAddress.toLowerCase();
@@ -1097,7 +1097,7 @@ app.get("/test-pagination", async (c) => {
         message: 'Pagination test completed',
         total_transactions: data.result.length,
         usdc_transactions: usdcTransactions.length,
-        sample_transactions: usdcTransactions.slice(0, 5).map(tx => ({
+        sample_transactions: usdcTransactions.slice(0, 5).map((tx: any) => ({
           from: tx.from,
           amount: parseFloat(tx.value) / Math.pow(10, 6),
           hash: tx.hash
@@ -1111,7 +1111,7 @@ app.get("/test-pagination", async (c) => {
       api_response: data
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Pagination test error:', error);
     return c.json({ success: false, error: error.message });
   }
@@ -1146,7 +1146,7 @@ app.post("/force-sync", async (c) => {
     
     if (data.status === '1' && data.result) {
       // Filter for USDC transactions
-      const usdcTransactions = data.result.filter(tx => {
+      const usdcTransactions = data.result.filter((tx: any) => {
         const isUsdc = tx.contractAddress && tx.contractAddress.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
         const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase();
         const isNotOutgoing = tx.from.toLowerCase() !== walletAddress.toLowerCase();
@@ -1217,7 +1217,7 @@ app.post("/force-sync", async (c) => {
           } else {
             console.log(`❌ Force sync - Failed to sync transaction: ${tx.hash}`, await supabaseResponse.text());
           }
-        } catch (error) {
+        } catch (error: any) {
           console.log(`❌ Force sync - Failed to sync transaction: ${tx.hash}`, error);
         }
       }
@@ -1228,7 +1228,7 @@ app.post("/force-sync", async (c) => {
         total_transactions: data.result.length,
         usdc_transactions: usdcTransactions.length,
         synced_to_supabase: syncedCount,
-        sample_transactions: usdcTransactions.slice(0, 10).map(tx => ({
+        sample_transactions: usdcTransactions.slice(0, 10).map((tx: any) => ({
           from: tx.from,
           amount: parseFloat(tx.value) / Math.pow(10, 6),
           hash: tx.hash
@@ -1242,7 +1242,7 @@ app.post("/force-sync", async (c) => {
       api_response: data
     });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Force sync error:', error);
     return c.json({ success: false, error: error.message });
   }
@@ -1282,7 +1282,7 @@ app.get("/test-blockchain", async (c) => {
     console.log('📊 API URL:', baseScanUrl);
     
     if (data.status === '1' && data.result) {
-      const usdcTransactions = data.result.filter(tx => {
+      const usdcTransactions = data.result.filter((tx: any) => {
         // USDC on Base: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
         const isUsdc = tx.contractAddress && tx.contractAddress.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
         const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase(); // Sadece GELEN transfer'lar
@@ -1312,7 +1312,7 @@ app.get("/test-blockchain", async (c) => {
         rawData: data
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.log('❌ Blockchain test error:', error);
     return c.json({
       success: false,
@@ -1830,7 +1830,7 @@ app.get("/", (c) => {
                 
                 return true;
               }
-            } catch (error) {
+            } catch (error: any) {
               console.log('Wallet connection failed:', error);
             }
           }
@@ -1915,7 +1915,7 @@ app.get("/", (c) => {
             } else {
               console.log('❌ Blockchain sync failed:', data.error);
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log('❌ Blockchain sync error:', error);
           }
         }
@@ -2013,7 +2013,7 @@ app.get("/", (c) => {
               balanceAmount.textContent = 'Error loading balance';
               balanceDetails.textContent = data.error || 'Failed to fetch balance';
             }
-          } catch (error) {
+          } catch (error: any) {
             balanceAmount.textContent = 'Error';
             balanceDetails.textContent = 'Failed to connect to server';
             console.error('Balance check error:', error);
@@ -2183,7 +2183,7 @@ app.get("/", (c) => {
               balanceAmount.textContent = 'Error loading balance';
               balanceDetails.textContent = data.error || 'Failed to fetch balance';
             }
-          } catch (error) {
+          } catch (error: any) {
             balanceAmount.textContent = 'Error';
             balanceDetails.textContent = 'Failed to connect to server';
             console.error('Balance check error:', error);
