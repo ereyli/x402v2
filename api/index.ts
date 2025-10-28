@@ -1753,6 +1753,8 @@ app.get("/", (c) => {
       <div id="coinRain" class="coin-rain"></div>
       
       <script>
+        console.log('📜 JavaScript loading started...');
+        
         // Define global variables
         let currentPaymentUrl = '';
         let currentPaymentTitle = '';
@@ -1761,6 +1763,7 @@ app.get("/", (c) => {
         
         // Define openPaymentModal function - Global scope (immediately available)
         window.openPaymentModal = function(url, title, type) {
+          console.log('🚀 openPaymentModal called with:', url, title, type);
           const modal = document.getElementById('paymentModal');
           const modalContent = document.getElementById('modalContent');
           const modalTitle = document.getElementById('modalTitle');
@@ -1972,6 +1975,7 @@ app.get("/", (c) => {
         
         // Balance check function
         window.checkBalance = function() {
+          console.log('🔍 checkBalance called');
           const walletInput = document.getElementById('walletInput');
           const balanceResult = document.getElementById('balanceResult');
           const balanceAmount = document.getElementById('balanceAmount');
@@ -2299,6 +2303,10 @@ app.get("/", (c) => {
             showPaymentSuccess();
           }
         });
+        
+        console.log('✅ JavaScript loading completed!');
+        console.log('🔍 window.openPaymentModal available:', typeof window.openPaymentModal);
+        console.log('🔍 window.checkBalance available:', typeof window.checkBalance);
       </script>
     </body>
     </html>
