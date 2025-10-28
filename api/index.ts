@@ -13,19 +13,7 @@ const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org'; // Public
 
 const app = new Hono();
 
-// Load x402 immediately - not lazy
-const { paymentMiddleware: x402Middleware, facilitator: cdpFacilitator } = await (async () => {
-  const x402Hono = await import("x402-hono");
-  const coinbaseX402 = await import("@coinbase/x402");
-  return {
-    paymentMiddleware: x402Hono.paymentMiddleware,
-    facilitator: coinbaseX402.facilitator
-  };
-})();
-
-// For Base Mainnet: CDP facilitator is REQUIRED
-// For testnet: use { url: "https://x402.org/facilitator" }
-const facilitatorConfig = cdpFacilitator;
+// x402 removed - using only Dreams Router for Base Mainnet
 
 // Dreams Router configuration for Base network - Lazy loading
 let dreamsRouter: any = null;
@@ -59,161 +47,9 @@ async function initializeDreamsRouter() {
   }
 }
 
-// x402 Payment Middleware - MUST be before route definitions
-app.use(
-  x402Middleware(
-    payTo,
-    {
-      "GET /payment/test": {
-        price: "$0.01",
-        network: network,
-        config: {
-          description: "🧪 TEST: Pay 0.01 USDC → Get 50 PAYX tokens. Tokens will be sent to your wallet later.",
-        }
-      },
-      "GET /payment/5usdc": {
-        price: "$5",
-        network: network,
-        config: {
-          description: "💎 Pay 5 USDC → Get 100,000 PAYX tokens. Tokens will be sent to your wallet later.",
-        }
-      },
-      "GET /payment/10usdc": {
-        price: "$10",
-        network: network,
-        config: {
-          description: "🚀 Pay 10 USDC → Get 200,000 PAYX tokens. Tokens will be sent to your wallet later.",
-        }
-      },
-      "GET /payment/100usdc": {
-        price: "$100",
-        network: network,
-        config: {
-          description: "🌟 Pay 100 USDC → Get 2,000,000 PAYX tokens (Best Value!). Tokens will be sent to your wallet later.",
-        }
-      }
-    },
-    facilitatorConfig
-  )
-);
+// x402 middleware removed - using only Dreams Router
 
-// Protected endpoints - Only accessible after payment
-app.get("/payment/test", (c) => {
-  return c.json({
-    success: true,
-    message: "Test payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
-    payment: {
-      amount: "0.01 USDC",
-      tokens: "50 PAYX",
-      status: "Payment recorded - Tokens will be distributed later"
-    }
-  });
-});
-
-
-app.get("/payment/5usdc", async (c) => {
-  // Simple payment tracking without Supabase dependency
-  const walletAddress = c.req.query('wallet');
-  if (walletAddress && process.env.SUPABASE_URL) {
-    try {
-      const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'apikey': process.env.SUPABASE_ANON_KEY
-        } as HeadersInit,
-        body: JSON.stringify({
-          wallet_address: walletAddress.toLowerCase(),
-          amount_usdc: 5,
-          amount_payx: 100000,
-          created_at: new Date().toISOString()
-        })
-      });
-      if (response.ok) console.log('Payment tracked');
-    } catch (error: any) {
-      console.error('Tracking failed:', error);
-    }
-  }
-
-  return c.json({
-    success: true,
-    message: "Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
-    payment: {
-      amount: "5 USDC",
-      tokens: "100,000 PAYX",
-      status: "Payment recorded - Tokens will be distributed later"
-    }
-  });
-});
-
-app.get("/payment/10usdc", async (c) => {
-  const walletAddress = c.req.query('wallet');
-  if (walletAddress && process.env.SUPABASE_URL) {
-    try {
-      await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'apikey': process.env.SUPABASE_ANON_KEY
-        } as HeadersInit,
-        body: JSON.stringify({
-          wallet_address: walletAddress.toLowerCase(),
-          amount_usdc: 10,
-          amount_payx: 200000,
-          created_at: new Date().toISOString()
-        })
-      });
-    } catch (error: any) {
-      console.error('Tracking failed:', error);
-    }
-  }
-
-  return c.json({
-    success: true,
-    message: "Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
-    payment: {
-      amount: "10 USDC",
-      tokens: "200,000 PAYX",
-      status: "Payment recorded - Tokens will be distributed later"
-    }
-  });
-});
-
-app.get("/payment/100usdc", async (c) => {
-  const walletAddress = c.req.query('wallet');
-  if (walletAddress && process.env.SUPABASE_URL) {
-    try {
-      await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'apikey': process.env.SUPABASE_ANON_KEY
-        } as HeadersInit,
-        body: JSON.stringify({
-          wallet_address: walletAddress.toLowerCase(),
-          amount_usdc: 100,
-          amount_payx: 2000000,
-          created_at: new Date().toISOString()
-        })
-      });
-    } catch (error: any) {
-      console.error('Tracking failed:', error);
-    }
-  }
-
-  return c.json({
-    success: true,
-    message: "Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
-    payment: {
-      amount: "100 USDC",
-      tokens: "2,000,000 PAYX",
-      status: "Payment recorded - Tokens will be distributed later"
-    }
-  });
-});
+// x402 payment endpoints removed - using only Dreams Router
 
 // ===== DREAMS ROUTER PAYMENT ENDPOINTS =====
 // Alternative payment method using Dreams Router on Base network
@@ -434,8 +270,8 @@ app.post("/add-manual-payment", async (c) => {
 
     if (response.ok) {
       console.log('✅ Manual payment added:', paymentData);
-      return c.json({ 
-        success: true, 
+  return c.json({
+    success: true,
         message: 'Payment added successfully',
         payment: paymentData
       });
@@ -853,7 +689,7 @@ app.get("/dashboard", async (c) => {
       
       payments.forEach((payment: any) => {
         const wallet = payment.wallet_address;
-        const paymentMethod = payment.payment_method || 'x402-base'; // Default to x402-base for existing payments
+        const paymentMethod = payment.payment_method || 'dreams-router'; // Default to dreams-router for existing payments
         
         if (!walletStats[wallet]) {
           walletStats[wallet] = {
@@ -904,11 +740,6 @@ app.get("/dashboard", async (c) => {
         total_payx: payments.reduce((sum: any, p: any) => sum + p.amount_payx, 0),
         // Payment method breakdown
         payment_methods: {
-          base: {
-            payments: totalBasePayments,
-            usdc: totalBaseUSDC,
-            method: 'x402-base'
-          },
           dreams: {
             payments: totalDreamsPayments,
             usdc: totalDreamsUSDC,
@@ -1669,18 +1500,16 @@ app.get("/", (c) => {
           </div>
         </div>
         
-        <a href="#" onclick="openPaymentModal('/payment/5usdc', '💎 5 USDC Payment'); return false;">5 USDC → 100,000 PAYX</a>
-        <a href="#" onclick="openPaymentModal('/payment/10usdc', '🚀 10 USDC Payment'); return false;">10 USDC → 200,000 PAYX</a>
-        <a href="#" onclick="openPaymentModal('/payment/100usdc', '🌟 100 USDC Payment', 'premium'); return false;">100 USDC → 2,000,000 PAYX</a>
-        
-        <a href="#" onclick="openPaymentModal('/payment/test', '🧪 Test Payment', 'test'); return false;" class="test-button">0.01 USDC → 50 PAYX</a>
-        
-        <div style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; text-align: center;">
-          <h3 style="color: white; margin: 0 0 10px 0; font-size: 16px;">🌙 Dreams Router Payments</h3>
-          <p style="color: #e0e0e0; margin: 5px 0; font-size: 12px;">Alternative payment method using Dreams Router</p>
-          <a href="#" onclick="openPaymentModal('/dreams/payment/5usdc', '🌙 Dreams: 5 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">5 USDC → 100,000 PAYX</a>
-          <a href="#" onclick="openPaymentModal('/dreams/payment/10usdc', '🌙 Dreams: 10 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">10 USDC → 200,000 PAYX</a>
-          <a href="#" onclick="openPaymentModal('/dreams/payment/100usdc', '🌙 Dreams: 100 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">100 USDC → 2,000,000 PAYX</a>
+        <!-- Dreams Router Payment Buttons - Main Payment Interface -->
+        <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; text-align: center;">
+          <h3 style="color: white; margin: 0 0 15px 0; font-size: 18px;">🌙 Dreams Router Payments</h3>
+          <p style="color: #e0e0e0; margin: 5px 0 20px 0; font-size: 14px;">Powered by Dreams Router on Base Mainnet</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+            <a href="#" onclick="openPaymentModal('/dreams/payment/5usdc', '🌙 Dreams: 5 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">5 USDC → 100,000 PAYX</a>
+            <a href="#" onclick="openPaymentModal('/dreams/payment/10usdc', '🌙 Dreams: 10 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">10 USDC → 200,000 PAYX</a>
+            <a href="#" onclick="openPaymentModal('/dreams/payment/100usdc', '🌙 Dreams: 100 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">100 USDC → 2,000,000 PAYX</a>
+          </div>
         </div>
         
         <div class="info">
