@@ -1694,7 +1694,7 @@ app.get("/", (c) => {
         }
         
         // Auto-detect wallet address (fallback)
-        window.autoDetectWallet = function(
+        window.autoDetectWallet = function() {
           const walletInput = document.getElementById('paymentWalletInput');
           
           // Try to get wallet from MetaMask or other providers
