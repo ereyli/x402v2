@@ -9,6 +9,8 @@
   "dependencies": {
     "@coinbase/x402": "^0.6.6",
     "@daydreamsai/ai-sdk-provider": "^0.1.5",
+    "@daydreamsai/cli": "^0.3.22",
+    "@daydreamsai/core": "^0.3.22",
     "@hono/node-server": "^1.19.5",
     "@lucid-dreams/agent-kit": "^0.2.19",
     "dotenv": "^17.2.3",

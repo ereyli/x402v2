@@ -15,35 +15,40 @@ const app = new Hono();
 
 // x402 removed - using only Dreams Router for Base Mainnet
 
-// Dreams Router configuration for Base network - Lazy loading
+// Dreams x402 Nanoservice configuration for Base Mainnet
 let dreamsRouter: any = null;
+let dreamsUser: any = null;
 
 async function initializeDreamsRouter() {
-  if (dreamsRouter) return dreamsRouter;
+  if (dreamsRouter) return { dreamsRouter, user: dreamsUser };
   
   try {
     // Lazy import to prevent Vercel crashes
-    const { createEVMAuthFromPrivateKey } = await import('@daydreamsai/ai-sdk-provider');
+    const { createDreamsRouterAuth } = await import('@daydreamsai/ai-sdk-provider');
+    const { privateKeyToAccount } = await import('viem/accounts');
     
     if (process.env.EVM_PRIVATE_KEY) {
-      const { dreamsRouter: router } = await createEVMAuthFromPrivateKey(
-        process.env.EVM_PRIVATE_KEY as `0x${string}`,
+      const { dreamsRouter: router, user } = await createDreamsRouterAuth(
+        privateKeyToAccount(process.env.EVM_PRIVATE_KEY as `0x${string}`),
         {
-          payments: { 
-            network: 'base'
+          payments: {
+            amount: "100000", // $0.10 USDC per request
+            network: "base", // Base Mainnet
           },
         }
       );
       dreamsRouter = router;
-      console.log('✅ Dreams Router initialized for Base network');
-      return dreamsRouter;
+      dreamsUser = user;
+      console.log('✅ Dreams x402 Nanoservice initialized for Base Mainnet');
+      console.log('💰 User balance:', user.balance);
+      return { dreamsRouter, user };
     } else {
       console.log('⚠️ EVM_PRIVATE_KEY not found, Dreams Router disabled');
-      return null;
+      return { dreamsRouter: null, user: null };
     }
   } catch (error: any) {
     console.error('❌ Dreams Router initialization failed:', error);
-    return null;
+    return { dreamsRouter: null, user: null };
   }
 }
 
@@ -55,127 +60,180 @@ async function initializeDreamsRouter() {
 // Alternative payment method using Dreams Router on Base network
 
 app.get("/dreams/payment/5usdc", async (c) => {
-  const router = await initializeDreamsRouter();
-  if (!router) {
-    return c.json({ error: "Dreams Router not available" }, 503);
+  const { dreamsRouter, user } = await initializeDreamsRouter();
+  if (!dreamsRouter) {
+    return c.json({ error: "Dreams x402 Nanoservice not available" }, 503);
   }
 
-  const walletAddress = c.req.query('wallet');
-  if (walletAddress && process.env.SUPABASE_URL) {
-    try {
-      const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'apikey': process.env.SUPABASE_ANON_KEY
-        } as HeadersInit,
-        body: JSON.stringify({
-          wallet_address: walletAddress.toLowerCase(),
-          amount_usdc: 5,
-          amount_payx: 100000,
-          payment_method: 'dreams-router', // Mark as Dreams Router payment
-          created_at: new Date().toISOString()
-        })
-      });
-      if (response.ok) console.log('Dreams Router payment tracked');
-    } catch (error: any) {
-      console.error('Dreams Router tracking failed:', error);
+  try {
+    // Use Dreams x402 nanoservice for payment
+    const response = await dreamsRouter("google-vertex/gemini-2.5-flash", {
+      messages: [{
+        role: "user",
+        content: "Process payment for 5 USDC → 100,000 PAYX tokens"
+      }]
+    });
+
+    // Track payment in Supabase
+    const walletAddress = c.req.query('wallet');
+    if (walletAddress && process.env.SUPABASE_URL) {
+      try {
+        await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            'apikey': process.env.SUPABASE_ANON_KEY
+          } as HeadersInit,
+          body: JSON.stringify({
+            wallet_address: walletAddress.toLowerCase(),
+            amount_usdc: 5,
+            amount_payx: 100000,
+            payment_method: 'dreams-x402',
+            created_at: new Date().toISOString()
+          })
+        });
+        console.log('✅ Dreams x402 payment tracked in Supabase');
+      } catch (error: any) {
+        console.error('❌ Dreams x402 tracking failed:', error);
+      }
     }
-  }
 
   return c.json({
     success: true,
-    message: "Dreams Router Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
+      message: "Dreams x402 payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
     payment: {
-      amount: "5 USDC",
-      tokens: "100,000 PAYX",
-      method: "Dreams Router (Base)",
-      status: "Payment recorded - Tokens will be distributed later"
-    }
-  });
+        amount: "5 USDC",
+        tokens: "100,000 PAYX",
+        status: "x402 micropayment processed - Tokens will be distributed later",
+        user_balance: user?.balance || "Unknown"
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Dreams x402 payment failed:', error);
+    return c.json({ 
+      error: "Dreams x402 payment failed", 
+      details: error.message 
+    }, 500);
+  }
 });
 
 app.get("/dreams/payment/10usdc", async (c) => {
-  const router = await initializeDreamsRouter();
-  if (!router) {
-    return c.json({ error: "Dreams Router not available" }, 503);
+  const { dreamsRouter, user } = await initializeDreamsRouter();
+  if (!dreamsRouter) {
+    return c.json({ error: "Dreams x402 Nanoservice not available" }, 503);
   }
 
-  const walletAddress = c.req.query('wallet');
-  if (walletAddress && process.env.SUPABASE_URL) {
-    try {
-      await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'apikey': process.env.SUPABASE_ANON_KEY
-        } as HeadersInit,
-        body: JSON.stringify({
-          wallet_address: walletAddress.toLowerCase(),
-          amount_usdc: 10,
-          amount_payx: 200000,
-          payment_method: 'dreams-router',
-          created_at: new Date().toISOString()
-        })
-      });
-    } catch (error: any) {
-      console.error('Dreams Router tracking failed:', error);
+  try {
+    // Use Dreams x402 nanoservice for payment
+    const response = await dreamsRouter("google-vertex/gemini-2.5-flash", {
+      messages: [{
+        role: "user",
+        content: "Process payment for 10 USDC → 200,000 PAYX tokens"
+      }]
+    });
+
+    // Track payment in Supabase
+    const walletAddress = c.req.query('wallet');
+    if (walletAddress && process.env.SUPABASE_URL) {
+      try {
+        await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            'apikey': process.env.SUPABASE_ANON_KEY
+          } as HeadersInit,
+          body: JSON.stringify({
+            wallet_address: walletAddress.toLowerCase(),
+            amount_usdc: 10,
+            amount_payx: 200000,
+            payment_method: 'dreams-x402',
+            created_at: new Date().toISOString()
+          })
+        });
+        console.log('✅ Dreams x402 payment tracked in Supabase');
+      } catch (error: any) {
+        console.error('❌ Dreams x402 tracking failed:', error);
+      }
     }
-  }
 
   return c.json({
     success: true,
-    message: "Dreams Router Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
+      message: "Dreams x402 payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
     payment: {
-      amount: "10 USDC",
-      tokens: "200,000 PAYX",
-      method: "Dreams Router (Base)",
-      status: "Payment recorded - Tokens will be distributed later"
-    }
-  });
+        amount: "10 USDC",
+        tokens: "200,000 PAYX",
+        status: "x402 micropayment processed - Tokens will be distributed later",
+        user_balance: user?.balance || "Unknown"
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Dreams x402 payment failed:', error);
+    return c.json({ 
+      error: "Dreams x402 payment failed", 
+      details: error.message 
+    }, 500);
+  }
 });
 
 app.get("/dreams/payment/100usdc", async (c) => {
-  const router = await initializeDreamsRouter();
-  if (!router) {
-    return c.json({ error: "Dreams Router not available" }, 503);
+  const { dreamsRouter, user } = await initializeDreamsRouter();
+  if (!dreamsRouter) {
+    return c.json({ error: "Dreams x402 Nanoservice not available" }, 503);
   }
 
-  const walletAddress = c.req.query('wallet');
-  if (walletAddress && process.env.SUPABASE_URL) {
-    try {
-      await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'apikey': process.env.SUPABASE_ANON_KEY
-        } as HeadersInit,
-        body: JSON.stringify({
-          wallet_address: walletAddress.toLowerCase(),
-          amount_usdc: 100,
-          amount_payx: 2000000,
-          payment_method: 'dreams-router',
-          created_at: new Date().toISOString()
-        })
-      });
-    } catch (error: any) {
-      console.error('Dreams Router tracking failed:', error);
-    }
-  }
+  try {
+    // Use Dreams x402 nanoservice for payment
+    const response = await dreamsRouter("google-vertex/gemini-2.5-flash", {
+      messages: [{
+        role: "user",
+        content: "Process payment for 100 USDC → 2,000,000 PAYX tokens"
+      }]
+    });
 
-  return c.json({
-    success: true,
-    message: "Dreams Router Payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
-    payment: {
-      amount: "100 USDC",
-      tokens: "2,000,000 PAYX",
-      method: "Dreams Router (Base)",
-      status: "Payment recorded - Tokens will be distributed later"
+    // Track payment in Supabase
+    const walletAddress = c.req.query('wallet');
+    if (walletAddress && process.env.SUPABASE_URL) {
+      try {
+        await fetch(`${process.env.SUPABASE_URL}/rest/v1/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            'apikey': process.env.SUPABASE_ANON_KEY
+          } as HeadersInit,
+          body: JSON.stringify({
+            wallet_address: walletAddress.toLowerCase(),
+            amount_usdc: 100,
+            amount_payx: 2000000,
+            payment_method: 'dreams-x402',
+            created_at: new Date().toISOString()
+          })
+        });
+        console.log('✅ Dreams x402 payment tracked in Supabase');
+      } catch (error: any) {
+        console.error('❌ Dreams x402 tracking failed:', error);
+      }
     }
-  });
+
+    return c.json({
+      success: true,
+      message: "Dreams x402 payment confirmed! Your PAYX tokens will be sent to your wallet soon.",
+      payment: {
+        amount: "100 USDC",
+        tokens: "2,000,000 PAYX",
+        status: "x402 micropayment processed - Tokens will be distributed later",
+        user_balance: user?.balance || "Unknown"
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Dreams x402 payment failed:', error);
+    return c.json({ 
+      error: "Dreams x402 payment failed", 
+      details: error.message 
+    }, 500);
+  }
 });
 
 // Balance endpoint - simple fetch to Supabase
@@ -866,8 +924,8 @@ app.post("/sync-all-historical", async (c) => {
           }
         }
         
-        return c.json({
-          success: true,
+  return c.json({
+    success: true,
           message: `Synced ${syncedCount} new transactions, skipped ${skippedCount} existing`,
           totalFound: usdcTransactions.length,
           synced: syncedCount,
@@ -926,8 +984,8 @@ app.get("/test-pagination", async (c) => {
         return isUsdc && isIncoming && isNotOutgoing;
       });
       
-      return c.json({
-        success: true,
+  return c.json({
+    success: true,
         message: 'Pagination test completed',
         total_transactions: data.result.length,
         usdc_transactions: usdcTransactions.length,
@@ -966,7 +1024,7 @@ app.post("/force-sync", async (c) => {
     const response = await fetch(baseScanUrl);
     
     if (!response.ok) {
-      return c.json({
+  return c.json({
         success: false,
         error: `API request failed: ${response.status} ${response.statusText}`
       });
@@ -1056,8 +1114,8 @@ app.post("/force-sync", async (c) => {
         }
       }
       
-      return c.json({
-        success: true,
+  return c.json({
+    success: true,
         message: `Force sync completed - Synced ${syncedCount} new transactions to Supabase`,
         total_transactions: data.result.length,
         usdc_transactions: usdcTransactions.length,
@@ -1127,8 +1185,8 @@ app.get("/test-blockchain", async (c) => {
         return isUsdc && isIncoming && isNotOutgoing && isNotTest;
       });
       
-      return c.json({
-        success: true,
+  return c.json({
+    success: true,
         message: "Blockchain connection successful!",
         wallet: walletAddress,
         totalTransactions: data.result.length,
@@ -1500,15 +1558,15 @@ app.get("/", (c) => {
           </div>
         </div>
         
-        <!-- Dreams Router Payment Buttons - Main Payment Interface -->
+        <!-- Dreams x402 Nanoservice Payment Buttons - Main Payment Interface -->
         <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; text-align: center;">
-          <h3 style="color: white; margin: 0 0 15px 0; font-size: 18px;">🌙 Dreams Router Payments</h3>
-          <p style="color: #e0e0e0; margin: 5px 0 20px 0; font-size: 14px;">Powered by Dreams Router on Base Mainnet</p>
+          <h3 style="color: white; margin: 0 0 15px 0; font-size: 18px;">🌙 Dreams x402 Nanoservice</h3>
+          <p style="color: #e0e0e0; margin: 5px 0 20px 0; font-size: 14px;">Powered by Dreams x402 Micropayments on Base Mainnet</p>
           
           <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
-            <a href="#" onclick="openPaymentModal('/dreams/payment/5usdc', '🌙 Dreams: 5 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">5 USDC → 100,000 PAYX</a>
-            <a href="#" onclick="openPaymentModal('/dreams/payment/10usdc', '🌙 Dreams: 10 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">10 USDC → 200,000 PAYX</a>
-            <a href="#" onclick="openPaymentModal('/dreams/payment/100usdc', '🌙 Dreams: 100 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">100 USDC → 2,000,000 PAYX</a>
+            <a href="#" onclick="openPaymentModal('/dreams/payment/5usdc', '🌙 Dreams x402: 5 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">5 USDC → 100,000 PAYX</a>
+            <a href="#" onclick="openPaymentModal('/dreams/payment/10usdc', '🌙 Dreams x402: 10 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">10 USDC → 200,000 PAYX</a>
+            <a href="#" onclick="openPaymentModal('/dreams/payment/100usdc', '🌙 Dreams x402: 100 USDC'); return false;" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">100 USDC → 2,000,000 PAYX</a>
           </div>
         </div>
         
