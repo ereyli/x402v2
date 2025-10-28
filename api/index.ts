@@ -1799,7 +1799,7 @@ app.get("/", (c) => {
         }
         
         // Legacy connect wallet function (kept for compatibility)
-        window.connectWallet = function(
+        window.connectWallet = function() {
           console.log('⚠️ Legacy connect wallet - use blockchain monitoring instead');
         }
         
@@ -1847,7 +1847,7 @@ app.get("/", (c) => {
           return false;
         }
         
-        window.startPayment = function(
+        window.startPayment = function() {
           const iframe = document.getElementById('paymentIframe');
           
           // Show iframe directly
@@ -1863,7 +1863,7 @@ app.get("/", (c) => {
         }
         
         // Blockchain monitoring function
-        window.startBlockchainMonitoring = function(
+        window.startBlockchainMonitoring = function() {
                  console.log('🔍 Starting blockchain monitoring...');
                  
                  // Monitor for 15 minutes
@@ -1925,33 +1925,33 @@ app.get("/", (c) => {
         }
         
         // Legacy payment monitoring (kept for compatibility)
-        window.startPaymentMonitoring = function(
+        window.startPaymentMonitoring = function() {
           console.log('⚠️ Legacy payment monitoring - use blockchain monitoring instead');
         }
         
         // Legacy functions (kept for compatibility)
-        window.sendWalletToBackend(walletAddress) {
+        window.sendWalletToBackend = function(walletAddress) {
           console.log('⚠️ Legacy wallet tracking - use blockchain monitoring instead');
         }
         
-        window.sendPaymentConfirmation(walletAddress) {
+        window.sendPaymentConfirmation = function(walletAddress) {
           console.log('⚠️ Legacy payment confirmation - use blockchain monitoring instead');
         }
         
         // Success overlay function
-        window.showSuccessOverlay = function(
+        window.showSuccessOverlay = function() {
           const overlay = document.getElementById('successOverlay');
           overlay.style.display = 'flex';
           createCoinRain();
         }
         
-        window.closeSuccessOverlay = function(
+        window.closeSuccessOverlay = function() {
           const overlay = document.getElementById('successOverlay');
           overlay.style.display = 'none';
         }
         
         // Close payment modal function
-        window.closePaymentModal = function(
+        window.closePaymentModal = function() {
           const modal = document.getElementById('paymentModal');
           const iframe = document.getElementById('paymentIframe');
           
@@ -1971,7 +1971,7 @@ app.get("/", (c) => {
         }
         
         // Balance check function
-        window.checkBalance = function(
+        window.checkBalance = function() {
           const walletInput = document.getElementById('walletInput');
           const balanceResult = document.getElementById('balanceResult');
           const balanceAmount = document.getElementById('balanceAmount');
@@ -2025,7 +2025,7 @@ app.get("/", (c) => {
         }
         
         // Coin rain animation
-        window.createCoinRain(duration = 5000) {
+        window.createCoinRain = function(duration = 5000) {
           const coinRain = document.getElementById('coinRain');
           const coins = ['💰', '🪙', '💎', '⭐', '✨'];
           const coinsToCreate = 50; // Number of coins
